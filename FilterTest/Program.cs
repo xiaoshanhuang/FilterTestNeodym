@@ -8,7 +8,10 @@ using NUnit.Framework;
 using MathNet.SignalProcessing;
 using MathNet.SignalProcessing.DataSources;
 using MathNet.SignalProcessing.Channel;
-using MathNet.SignalProcessing.Filter.FIR;
+//using MathNet.SignalProcessing.Filter.FIR;
+//using MathNet.SignalProcessing.Filter.IIR;
+using MathNet.Numerics.Filtering.FIR;
+using MathNet.Numerics.Filtering.IIR;
 
 namespace FilterTest
 {
@@ -36,38 +39,54 @@ namespace FilterTest
             }
 
             // Filter initialization
-            double[] coefLowPass = FirCoefficients.LowPass(samplingRate, 30, 1000);
+            double[] coefLowPass = FirCoefficients.LowPass(samplingRate, 50, 500);
             OnlineFirFilter filterLowPass = new OnlineFirFilter(coefLowPass);
 
-            double[] coefHighPass = FirCoefficients.HighPass(samplingRate, 0.5, 3000);
+            double[] coefHighPass = FirCoefficients.HighPass(samplingRate, 0.5, 1500);
             OnlineFirFilter filterHighPass = new OnlineFirFilter(coefHighPass);
 
-            double[] coefBandStop = FirCoefficients.BandStop(samplingRate, 45, 55, 3000);
+            double[] coefBandStop = FirCoefficients.BandStop(samplingRate, 45, 55, 1500);
             OnlineFirFilter filterBandStop = new OnlineFirFilter(coefLowPass);
+
+            double[] coefIIR = IirCoefficients.LowPass(samplingRate, 50, 1);
 
             // Filtering
             double[] tempHighPass = filterHighPass.ProcessSamples(data);
             double[] tempLowPass = filterLowPass.ProcessSamples(tempHighPass);
             double[] result = filterBandStop.ProcessSamples(tempLowPass);
 
-            StreamWriter coef = new StreamWriter("D:\\coef.txt");
-            for (int i = 0; i < coefBandStop.Length; i++)
+            double[] coefPink = new double[8] { 0.049922035, -0.095993537, 0.050612699, -0.004408786, 1, -2.494956002, 2.017265875, -0.522189400 };
+            int nT60 = 1430;
+            IChannelSource whiteSource = new WhiteGaussianNoiseSource();
+            double[] whiteNoise = new double[dataLength + nT60];
+            for (int i = 0; i < whiteNoise.Length; i++)
             {
-                coef.WriteLine(coefBandStop[i]);
+                whiteNoise[i] = whiteSource.ReadNextSample();
+            }
+            
+            OnlineIirFilter filterPink = new OnlineIirFilter(coefPink);
+            double[] tempData = filterLowPass.ProcessSamples(whiteNoise);
+            double[] pinkNoise = new double[dataLength];
+            Array.Copy(tempData, nT60, pinkNoise, 0, dataLength);
+
+            StreamWriter coef = new StreamWriter("D:\\coef.txt");
+            for (int i = 0; i < coefPink.Length; i++)
+            {
+                coef.WriteLine(coefPink[i]);
             }
             coef.Close();
 
             StreamWriter dataFile = new StreamWriter("D:\\data.txt");
-            for (int i = 0; i < data.Length; i++)
+            for (int i = 0; i < whiteNoise.Length; i++)
             {
-                dataFile.WriteLine(data[i]);
+                dataFile.WriteLine(whiteNoise[i]);
             }
             dataFile.Close();
 
             StreamWriter resultFile = new StreamWriter("D:\\result.txt");
-            for (int i = 0; i < result.Length; i++)
+            for (int i = 0; i < pinkNoise.Length; i++)
             {
-                resultFile.WriteLine(result[i]);
+                resultFile.WriteLine(pinkNoise[i]);
             }
             resultFile.Close();
         }
