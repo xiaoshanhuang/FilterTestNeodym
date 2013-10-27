@@ -48,7 +48,7 @@ namespace FilterTest
             double[] coefBandStop = FirCoefficients.BandStop(samplingRate, 45, 55, 1500);
             OnlineFirFilter filterBandStop = new OnlineFirFilter(coefLowPass);
 
-            double[] coefIIR = IirCoefficients.LowPass(samplingRate, 50, 1);
+            double[] coefIIR = IirCoefficients.LowPass(samplingRate, 50, 6);
 
             // Filtering
             double[] tempHighPass = filterHighPass.ProcessSamples(data);
@@ -63,16 +63,16 @@ namespace FilterTest
             {
                 whiteNoise[i] = whiteSource.ReadNextSample();
             }
-            
+
             OnlineIirFilter filterPink = new OnlineIirFilter(coefPink);
-            double[] tempData = filterLowPass.ProcessSamples(whiteNoise);
+            double[] tempData = filterPink.ProcessSamples(whiteNoise);
             double[] pinkNoise = new double[dataLength];
             Array.Copy(tempData, nT60, pinkNoise, 0, dataLength);
 
             StreamWriter coef = new StreamWriter("D:\\coef.txt");
-            for (int i = 0; i < coefPink.Length; i++)
+            for (int i = 0; i < coefIIR.Length; i++)
             {
-                coef.WriteLine(coefPink[i]);
+                coef.WriteLine(coefIIR[i]);
             }
             coef.Close();
 
