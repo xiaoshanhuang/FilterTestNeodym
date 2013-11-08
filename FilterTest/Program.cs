@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Linq;
 using MathNet.Numerics;
 using NUnit.Framework;
 using MathNet.SignalProcessing;
@@ -24,7 +25,7 @@ namespace FilterTest
             int samplingRate = 1000;
             double signalFreq = 10; double signalAmp = 10;
             double noiseFreq = 0.25; double noiseAmp = 10;
-            double  utilityFreq = 50; double utilityAmp = 1000;
+            double  utilityFreq = 50; double utilityAmp = 5;
 
             IChannelSource signalSource = new SinusoidalSource(samplingRate, signalFreq, signalAmp, 0, 0, 0);
             IChannelSource noiseSource = new SinusoidalSource(samplingRate, noiseFreq, noiseAmp, 0, 0, 0);
@@ -39,13 +40,13 @@ namespace FilterTest
             }
 
             // Filter initialization
-            double[] coefLowPass = FirCoefficients.LowPass(samplingRate, 50, 500);
+            double[] coefLowPass = FirCoefficients.LowPass(samplingRate, 40, 0);
             OnlineFirFilter filterLowPass = new OnlineFirFilter(coefLowPass);
 
-            double[] coefHighPass = FirCoefficients.HighPass(samplingRate, 0.5, 1500);
+            double[] coefHighPass = FirCoefficients.HighPass(samplingRate, 0.5, 0);
             OnlineFirFilter filterHighPass = new OnlineFirFilter(coefHighPass);
 
-            double[] coefBandStop = FirCoefficients.BandStop(samplingRate, 45, 55, 1500);
+            double[] coefBandStop = FirCoefficients.BandStop(samplingRate, 45, 55, 0);
             OnlineFirFilter filterBandStop = new OnlineFirFilter(coefLowPass);
 
             double[] coefIIR = IirCoefficients.LowPass(samplingRate, 50, 6);
@@ -70,9 +71,9 @@ namespace FilterTest
             Array.Copy(tempData, nT60, pinkNoise, 0, dataLength);
 
             StreamWriter coef = new StreamWriter("D:\\coef.txt");
-            for (int i = 0; i < coefIIR.Length; i++)
+            for (int i = 0; i < coefHighPass.Length; i++)
             {
-                coef.WriteLine(coefIIR[i]);
+                coef.WriteLine(coefHighPass[i]);
             }
             coef.Close();
 
@@ -84,11 +85,12 @@ namespace FilterTest
             dataFile.Close();
 
             StreamWriter resultFile = new StreamWriter("D:\\result.txt");
-            for (int i = 0; i < pinkNoise.Length; i++)
+            for (int i = 0; i < result.Length; i++)
             {
-                resultFile.WriteLine(pinkNoise[i]);
+                resultFile.WriteLine(result[i]);
             }
             resultFile.Close();
+
         }
     }
 }
